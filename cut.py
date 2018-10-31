@@ -1,20 +1,7 @@
 from PIL import Image
 import os
 import numpy as np
-
-def Get_List(path):
-    files = os.listdir(path);
-    dirList = []
-    fileList = []
-    for f in files:
-        if (os.path.isdir(path + '/' + f)):
-            if (f[0] == '.'):
-                pass
-            else:
-                dirList.append(f)
-        if (os.path.isfile(path + '/' + f)):
-            fileList.append(f)
-    return [dirList, fileList]
+from basic_lib import Get_List,mkdir
 
 
 _,img_names = Get_List('/media/kun/Dataset/Pose/DataSet/0001/img')

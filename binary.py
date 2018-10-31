@@ -19,25 +19,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import os
-
-def Get_List(path):
-    files = os.listdir(path);
-    dirList = []
-    fileList = []
-    for f in files:
-        if (os.path.isdir(path + '/' + f)):
-            if (f[0] == '.'):
-                pass
-            else:
-                dirList.append(f)
-        if (os.path.isfile(path + '/' + f)):
-            fileList.append(f)
-    return [dirList, fileList]
-
-def mkdir(path):
-    isExists = os.path.exists(path)
-    if not isExists:
-        os.makedirs(path)
+from basic_lib import Get_List,mkdir
 
 path_root = '/media/kun/Dataset/Pose/openpose/tmp/'
 dir_name,_ = Get_List(path_root)

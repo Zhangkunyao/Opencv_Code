@@ -1,19 +1,24 @@
-from picture_to_video import Get_List
+# coding=utf-8
+from basic_lib import Get_List,mkdir
 import cv2
 import os
 import numpy as np
-# path_root = "../data/target_pose"
-# _,img_names = Get_List(path_root)
-# img_names.sort()
 
-img = cv2.imread('./0001.png ')
-kernel = np.ones((5, 5), np.uint8)
-erosion = cv2.erode(img, kernel)
-out = np.concatenate([img,erosion],axis=1)
-cv2.imshow(out)
-cv2.waitKey(0)
+# kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 8))  # 矩形结构
+# kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (8, 8))  # 椭圆结构
+kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (10, 10))  # 十字形结构
 
-# for i in range(len(img_names)):
-#     img = cv2.imread(os.path.join(path_root, img_names[i]))
-#     videoWriter.write(img)
-#     print(1.0*i/len(img_names))
+
+path_root = "../data/target_pose"
+save_path = '../data/result'
+_,img_names = Get_List(path_root)
+img_names.sort()
+
+for i in range(len(img_names)):
+    img = cv2.imread(os.path.join(path_root, img_names[i]))
+    save_name = os.path.join(save_path, img_names[i])
+    img = img * 1.5
+    # kernel = np.ones((8, 8), np.uint8)
+    dilation = cv2.dilate(img, kernel)
+    cv2.imwrite(save_name,dilation)
+    print(1.0*i/len(img_names))
