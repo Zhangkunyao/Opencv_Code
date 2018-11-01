@@ -9,7 +9,7 @@ import numpy as np
 kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (10, 10))  # 十字形结构
 
 
-path_root = "../data/target_pose"
+path_root = "../data/source_pose"
 save_path = '../data/result'
 _,img_names = Get_List(path_root)
 img_names.sort()
