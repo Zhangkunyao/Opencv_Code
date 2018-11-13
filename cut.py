@@ -49,3 +49,4 @@ print('finished')
 # # mouth = image[85:250, 85:220]
 # cv2.imshow("cut", image)
 # cv2.waitKey(0)
+

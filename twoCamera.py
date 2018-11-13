@@ -11,8 +11,8 @@ two_camera.py:
 import cv2
 import numpy as np
 
-cap0 = cv2.VideoCapture('./0001.flv')
-cap1 = cv2.VideoCapture('./0002.flv')
+cap0 = cv2.VideoCapture('./video/0001.mp4')
+cap1 = cv2.VideoCapture('./video/0002.mp4')
 ret = cap0.set(3, 320)
 ret = cap0.set(4, 240)
 ret = cap1.set(3, 320)

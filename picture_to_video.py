@@ -2,14 +2,14 @@ import cv2
 import os
 from basic_lib import Get_List
 
-root_path = '/media/kun/UbuntuData/Kun/Dance/Dance-Basic-D-Match/results'
+root_path = '/media/kun/UbuntuData/Kun/Dance/Dance- GP-GAN/results'
 _,img_all = Get_List(root_path)
 img_all.sort()
 img = cv2.imread(os.path.join(root_path,img_all[0]))
 fps = 30
 img_size = (img.shape[1],img.shape[0])
 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-videoWriter = cv2.VideoWriter('result_2_1.avi', fourcc, fps, img_size)
+videoWriter = cv2.VideoWriter('测试_gp.avi', fourcc, fps, img_size)
 if not videoWriter.isOpened():
     print("video error")
     exit(0)

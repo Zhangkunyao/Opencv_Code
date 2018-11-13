@@ -5,8 +5,9 @@ import numpy as np
 import os
 from basic_lib import Get_List,get_bbos
 
+save_path = '/media/kun/Dataset/Pose/DataSet/result_hand_face/0001.哔哩哔哩-【机器人索尔】每天学一点，简单街舞教学，机械舞震感舞动作配合音乐即兴表演[超清版]/normallize'
+root_path = '/media/kun/Dataset/Pose/DataSet/result_hand_face/0001.哔哩哔哩-【机器人索尔】每天学一点，简单街舞教学，机械舞震感舞动作配合音乐即兴表演[超清版]'
 
-save_path = '/media/kun/Dataset/Pose/DataSet/result_hand_face/芭蕾_1/normailze'
 load_size = 256
 target_data = {'ave_hight':158.132784,'ave_weight':44.472980,'ave_y':73.224910,'ave_x':139.159290}
 source_data = {'ave_hight':162.241520,'ave_weight':47.344300,'ave_y':72.888039,'ave_x':111.002168}
@@ -15,7 +16,7 @@ width_redio = target_data['ave_weight']/source_data['ave_weight']
 y_redio = target_data['ave_y']-source_data['ave_y']
 x_redio = target_data['ave_x']-source_data['ave_x']
 
-root_path = '/media/kun/Dataset/Pose/DataSet/result_hand_face/芭蕾_1'
+
 
 _,source_pose_all = Get_List(os.path.join(root_path,'pose'))
 # opencv shape (hight,weight,(bgr))
