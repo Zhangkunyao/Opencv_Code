@@ -19,7 +19,7 @@ def mkdir(path):
     if not isExists:
         os.makedirs(path)
 
-def get_bbos(img):
+def get_muliti_bbox(img):
     tmp = (img[:,:,0]>0)*1 + (img[:,:,1]>0)*1 + (img[:,:,2]>0)*1
     tmp = tmp > 0
     sp = tmp.shape  # 行 列
@@ -97,3 +97,35 @@ def get_bbos(img):
                         glob_bbox[3] = ymax
                     data_map[ymin - 1:ymax + 1, xmin - 1:xmax + 1] = 0;
     return {'xmin':glob_bbox[0],'ymin':glob_bbox[1],'xmax':glob_bbox[2],'ymax':glob_bbox[3]}
+
+def get_bbox(img):
+    tmp = img[...,0] + img[...,1] + img[...,2]
+    tmp = 1*(tmp>10)
+    width = tmp.shape[1]
+    hight = tmp.shape[0]
+    left = 0
+    right = width
+    top = 0
+    down = hight
+    index = 0
+
+    for index in range(0,hight,5):
+        if sum(tmp[index,:]) != 0:
+            break
+    top = index
+
+    for index in range(hight-1,-1,-5):
+        if sum(tmp[index,:]) != 0:
+            break
+    down = index
+
+    for index in range(0,width,5):
+        if sum(tmp[:,index]) != 0:
+            break
+    left = index
+
+    for index in range(width-1,-1,-5):
+        if sum(tmp[:,index]) != 0:
+            break
+    right = index
+    return {"min":(left,top),"max":(right,down),"xmax":right,"xmin":left,"ymin":top,"ymax":down}

@@ -4,7 +4,7 @@ import time
 import numpy as np
 import os
 
-from basic_lib import Get_List,get_bbos
+from basic_lib import Get_List,get_bbox
 
 
 path_root = '/media/kun/Dataset/Pose/DataSet/result_hand_face/芭蕾_1/expend'
@@ -21,7 +21,7 @@ for i in range(len(target_pose_all)):
     pose_path = os.path.join(path_root, pose_name)
     target_pose = cv2.imread(pose_path)
     target_pose = cv2.resize(target_pose, (load_size, load_size), interpolation=cv2.INTER_CUBIC)
-    glob_bbox = get_bbos(target_pose)
+    glob_bbox = get_bbox(target_pose)
 
     xmin = glob_bbox['xmin']
     ymin = glob_bbox['ymin']
