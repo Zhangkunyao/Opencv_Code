@@ -15,18 +15,17 @@ def text_save(filename, data):
     file.write('\n')
     file.close()
 
-sal_root = "/media/kun/Dataset/Pose/DataSet/new_data/video_32/WSHP"
-img_root = "/media/kun/Dataset/Pose/DataSet/new_data/video_32/img"
-pose_root = "/media/kun/Dataset/Pose/DataSet/new_data/video_32/pose"
-save_root = "/media/kun/Dataset/Pose/DataSet/new_data/video_32/cut"
-txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_32/cut/loc.txt'
+img_root = "/media/kun/Dataset/Pose/DataSet/new_data/0001/img"
+pose_root = "/media/kun/Dataset/Pose/DataSet/new_data/0001/WSHP"
+save_root = "/media/kun/Dataset/Pose/DataSet/new_data/0001/WSHP_Cut"
+txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/0001/WSHP_Cut/loc.txt'
 
 _,img_list = Get_List(img_root)
 img_list.sort()
 
 for index,name in enumerate(img_list):
     img_path = os.path.join(img_root,name)
-    sal_path = os.path.join(sal_root, name)
+    # sal_path = os.path.join(sal_root, name)
     pose_path = os.path.join(pose_root, name)
 
     pose_save_path = os.path.join(save_root, 'pose')
@@ -35,7 +34,7 @@ for index,name in enumerate(img_list):
     img_save_path = os.path.join(img_save_path, name)
 
     img = cv2.imread(img_path)
-    sal = cv2.imread(sal_path)
+    sal = cv2.imread(pose_path)
     pose = cv2.imread(pose_path)
 
     sal = sal[...,0] + sal[...,1] + sal[...,2]
@@ -53,8 +52,8 @@ for index,name in enumerate(img_list):
         out = out[bbox['ymin']:bbox['ymax'],bbox['xmin']:bbox['xmax'],...]
         pose = pose[bbox['ymin']:bbox['ymax'],bbox['xmin']:bbox['xmax'],...]
     text_save(txt_path, [bbox['xmin'], bbox['xmax'], bbox['ymin'], bbox['ymax']])
-    cv2.imwrite(img_save_path,out,[int(cv2.IMWRITE_PNG_COMPRESSION), 0])
-    cv2.imwrite(pose_save_path, pose, [int(cv2.IMWRITE_PNG_COMPRESSION), 0])
+    cv2.imwrite(img_save_path,out,[int(cv2.IMWRITE_PNG_COMPRESSION), 1])
+    cv2.imwrite(pose_save_path, pose, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
     # videoWriter.write(out)
     print(index)
 # videoWriter.release()

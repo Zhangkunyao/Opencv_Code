@@ -20,10 +20,10 @@ def text_save(filename, data):
 
 
 
-IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePose'
-Img_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/img'
-IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/pose'
-Img_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/img.txt'
+IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePose'
+Img_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/img'
+IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/pose'
+Img_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img.txt'
 
 _,IUV_ALL = Get_List(IUV_path_root)
 index = 0
@@ -44,11 +44,11 @@ for name in IUV_ALL:
     plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
     plt.margins(0, 0)
     plt.imshow( IUV[:,:,::-1] )
-    plt.contour( IUV[:,:,1]/256.,15, linewidths = 5 )
-    plt.contour( IUV[:,:,2]/256.,15, linewidths = 5 )
+    plt.contour( IUV[:,:,1]/256.,15, linewidths = 3 )
+    plt.contour( IUV[:,:,2]/256.,15, linewidths = 3 )
     plt.savefig(IUV_save_path)
     plt.close()
-    img_path = 'cp -r ' + img_path + ' /media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/img'
+    img_path = 'cp -r ' + img_path + ' /media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img'
     text_save(Img_save_root,img_path)
     index = index+1
     print(index/len(IUV_ALL))
