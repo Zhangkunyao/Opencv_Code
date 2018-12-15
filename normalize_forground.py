@@ -59,25 +59,25 @@ target_pose['bias'] = 103
 # source_pose['h_middle'] = 685.977859
 # source_pose['bias'] = 85
 source_pose = {}
-source_pose['y_min'] = 807.900398
-source_pose['y_middle'] = 944.796877
-source_pose['y_max'] = 973.400870
-source_pose['h_close'] = 853.156591
-source_pose['h_far'] = 804.780441
-source_pose['h_middle'] = 790.138627
+source_pose['y_min'] = 515.840048
+source_pose['y_middle'] = 592.495087
+source_pose['y_max'] = 625.104940
+source_pose['h_close'] = 437.892544
+source_pose['h_far'] = 235.639149
+source_pose['h_middle'] = 382.719857
 source_pose['bias'] = 103
 # video_27 50
 # video_06 103
 # scale = target_pose['h_far']/source_pose['h_far'] + (source_pose['y_middle'] - source_pose['y_min'])/(source_pose['y_max'] - source_pose['y_min'])*(target_pose['h_close']/source_pose['h_close'] - target_pose['h_far']/source_pose['h_far'])
 scale = (target_pose['h_middle']/source_pose['h_middle'])
 
-loc_all = get_all_loc("/home/kun/Documents/DataSet/video_06/cut/loc.txt")
+loc_all = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/cut/loc.txt")
 
 target_tmp_path = '/home/kun/Documents/DataSet/video_06/back_ground.png'
-source_tmp_path = '/home/kun/Documents/DataSet/video_06/back_ground.png'
+source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/back_ground.png'
 
-source_path = "/home/kun/Documents/DataSet/video_06/cut/save_result"
-save_path = "/home/kun/Documents/DataSet/video_06/cut/normal_result"
+source_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/cut/save_result"
+save_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/cut/normal_result"
 
 _,source_imgs = Get_List(source_path)
 source_imgs.sort()
@@ -88,9 +88,15 @@ target_shape = target_pose_img.shape
 source_shape = source_pose_img.shape
 
 point_loc = []
+
+fps = 30
+fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+videoWriter = cv2.VideoWriter('tmp.avi', fourcc, fps, (target_shape[1],target_shape[0]))
+
 for i,pose_name in enumerate(source_imgs):
-    tmp = os.path.join(source_path,pose_name)
-    source_pose_img = cv2.imread(tmp) #input 256*256 img
+
+    img_path = os.path.join(source_path,pose_name)
+    source_pose_img = cv2.imread(img_path) #input 256*256 img
 
     tmp = loc_all[i]
     point = {'xmin':tmp[0],'xmax':tmp[1],'ymin':tmp[2],'ymax':tmp[3]}
@@ -103,8 +109,10 @@ for i,pose_name in enumerate(source_imgs):
     else:
         source_pose_img = img_process(source_pose_img,[w,h])
         source_pose_img = cv2.resize(source_pose_img,(int(scale*w),int(scale * h)),interpolation=cv2.INTER_CUBIC)
-        # cv2.imshow('a',source_pose_img)
-        # cv2.waitKey(0)
+        result = np.zeros(target_shape)
+        result[..., 1] = 255
+
+
         if (point['ymax']-source_pose['bias']) <= source_pose['y_middle']:
             y_pose = target_pose['y_min'] + (target_pose['y_middle'] - target_pose['y_min']) / \
                  (source_pose['y_middle'] - source_pose['y_min']) * (point['ymax']-source_pose['bias'] - source_pose['y_min'])
@@ -114,17 +122,25 @@ for i,pose_name in enumerate(source_imgs):
         # y_pose = bias = target_pose['y_min'] + (source_pose['y_middle'] - source_pose['y_min']) / \
         #      (source_pose['y_max'] - source_pose['y_min']) * (target_pose['y_max'] - target_pose['y_min'])-(point['ymax'] - 50)
 
-        y_pose = int(y_pose + target_pose['bias'])
+        y_pose = int(y_pose + target_pose['bias']+100)
 
         x_pose = int(point['xmin']/source_shape[1]*target_shape[1] - (scale*w - w)/2)
         result = np.zeros(target_shape)
         result[...,1] = 255
-        xmin = x_pose
+        xmin = max(x_pose,0)
         ymin = max(y_pose - source_pose_img.shape[0],0)
         xmax = min(xmin + source_pose_img.shape[1],target_shape[1])
         ymax = min(y_pose,target_shape[0])
-
+        # try:
         result[ymin:ymax,xmin:xmax,...] = source_pose_img[source_pose_img.shape[0]-(ymax - ymin):source_pose_img.shape[0],
                                           source_pose_img.shape[1] - (xmax-xmin):source_pose_img.shape[1],...]
+        # except:
+        #     print(xmin)
+        #     print(ymin)
+        #     print(xmax)
+        #     print(ymax)
+        #     print(pose_name)
+        #     while 1:
+        #         continue
     cv2.imwrite(os.path.join(save_path, pose_name), result,[int(cv2.IMWRITE_PNG_COMPRESSION), 1])
     print(i/len(source_imgs))

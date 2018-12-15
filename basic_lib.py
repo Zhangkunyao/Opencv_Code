@@ -100,7 +100,7 @@ def get_muliti_bbox(img):
 
 def get_bbox(img):
     tmp = img[...,0] + img[...,1] + img[...,2]
-    tmp = 1*(tmp>10)
+    tmp = 1*(tmp>5)
     width = tmp.shape[1]
     hight = tmp.shape[0]
     left = 0
@@ -108,24 +108,58 @@ def get_bbox(img):
     top = 0
     down = hight
     index = 0
-
-    for index in range(0,hight,5):
-        if sum(tmp[index,:]) != 0:
+    final_result = [0,0,0,0]
+    while 1:
+        for index in range(left,width,5):
+            if sum(tmp[:,index]) != 0:
+                break
+        if index >= (width-10):
             break
-    top = index
+        left = index
 
-    for index in range(hight-1,-1,-5):
-        if sum(tmp[index,:]) != 0:
-            break
-    down = index
+        for index in range(left,width,5):
+            if sum(tmp[:,index]) == 0:
+                break
+        right = index
 
-    for index in range(0,width,5):
-        if sum(tmp[:,index]) != 0:
+        for index in range(0,hight,5):
+            if sum(tmp[index,left:right]) != 0:
+                break
+        top = index
+
+        for index in range(top,hight,5):
+            if sum(tmp[index,left:right]) == 0:
+                break
+        down = index
+        if (final_result[1]-final_result[0])*(final_result[3]-final_result[2]) < (right-left)*(down-top):
+            final_result = [left,right,top,down]
+        left = right
+    # 细化部分
+    left = final_result[0]
+    index = final_result[0]
+    for index in range(left, width,-1):
+        if sum(tmp[:, index]) == 0:
             break
     left = index
 
-    for index in range(width-1,-1,-5):
-        if sum(tmp[:,index]) != 0:
+    right = final_result[1]
+    index = final_result[1]
+    for index in range(right, width, -1):
+        if sum(tmp[:, index]) != 0:
             break
     right = index
+
+    top = final_result[2]
+    index = final_result[2]
+    for index in range(top, hight,-1):
+        if sum(tmp[index, left:right]) == 0:
+            break
+    top = index
+
+    down = final_result[3]
+    index = final_result[3]
+    for index in range(down, hight, -1):
+        if sum(tmp[index, left:right]) != 0:
+            break
+    down = index
     return {"min":(left,top),"max":(right,down),"xmax":right,"xmin":left,"ymin":top,"ymax":down}

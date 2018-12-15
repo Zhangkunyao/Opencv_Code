@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from basic_lib import Get_List
 import os
 import numpy as np
+from PIL import Image
+
 def rotate(image, angle, center=None, scale=1.0): #1
     (h, w) = image.shape[:2] #2
     if center is None: #3
@@ -19,49 +21,69 @@ def text_save(filename, data):
     file.close()
 
 
+def DenseposeProcess(img,target_shape):
+    IUV_size = img.size
+    scale = 1.0 * target_shape[1] / img.size[1]
+    if scale * img.size[0] > size_target[0] * 2:
+        IUV = img.resize((int(img.size[0]), int(img.size[1] * scale)), Image.ANTIALIAS)
+    else:
+        IUV = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)), Image.ANTIALIAS)
 
-IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePose'
-Img_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/img'
-IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/pose'
-Img_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img.txt'
-
-_,IUV_ALL = Get_List(IUV_path_root)
-index = 0
-
-# IUV_path = os.path.join(IUV_path_root,IUV_ALL[0])
-# IUV = cv2.imread(IUV_path)
-
-
-for name in IUV_ALL:
-    IUV_path = os.path.join(IUV_path_root,name)
-    img_name = name[:-8] + '.png'
-    img_path = os.path.join(Img_path_root,img_name)
-    IUV_save_path = os.path.join(IUV_save_root,img_name)
-
-    IUV = cv2.imread(IUV_path)
-    fig = plt.figure(figsize=[IUV.shape[1] / 100.0, IUV.shape[0] / 100.0])
+    plt.figure(figsize=[IUV.size[0] / 100.0, IUV.size[1] / 100.0])
+    IUV = np.array(IUV)
     plt.axis('off')
     plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
     plt.margins(0, 0)
-    plt.imshow( IUV[:,:,::-1] )
-    plt.contour( IUV[:,:,1]/256.,15, linewidths = 3 )
+    plt.imshow(IUV)
+    plt.contour(IUV[:, :, 0] / 256., 15, linewidths=5)
+    plt.contour(IUV[:, :, 1] / 256., 15, linewidths=5)
+    plt.contour(IUV[:, :, 2] / 256., 15, linewidths=3)
+    plt.savefig(os.path.join(path_root, 'tmp.png'))
+    plt.close()
+    final = Image.open(os.path.join(path_root, 'tmp.png')).convert('RGB')
+    final = final.resize((IUV_size[0], IUV_size[1]), Image.ANTIALIAS)
+    final = np.array(final)[:, :, ::-1]
+    return final
+
+path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/'
+IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/org'
+IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/pose'
+
+target_img_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
+target_img = Image.open(target_img_path).convert('RGB')
+size_target = target_img.size
+
+_,IUV_ALL = Get_List(IUV_path_root)
+IUV_ALL.sort()
+index = 0
+
+for name in IUV_ALL:
+    IUV_path = os.path.join(IUV_path_root,name)
+    IUV_save_path = os.path.join(IUV_save_root,name)
+
+    IUV = Image.open(IUV_path).convert('RGB')
+    IUV_size = IUV.size
+
+    scale = 1.0*size_target[1]/IUV.size[1]
+    if scale*IUV.size[0]>size_target[0]*2:
+        IUV = IUV.resize((int(IUV.size[0]), int(IUV.size[1] * scale)), Image.ANTIALIAS)
+    else:
+        IUV = IUV.resize((int(IUV.size[0]*scale),int(IUV.size[1]*scale)),Image.ANTIALIAS)
+
+    fig = plt.figure(figsize=[IUV.size[0] / 100.0, IUV.size[1] / 100.0])
+    IUV = np.array(IUV)
+    plt.axis('off')
+    plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+    plt.margins(0, 0)
+    plt.imshow( IUV)
+    plt.contour(IUV[:, :, 0] / 256., 15, linewidths=5)
+    plt.contour( IUV[:,:,1]/256.,15, linewidths = 5 )
     plt.contour( IUV[:,:,2]/256.,15, linewidths = 3 )
     plt.savefig(IUV_save_path)
     plt.close()
-    img_path = 'cp -r ' + img_path + ' /media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img'
-    text_save(Img_save_root,img_path)
+    # final = Image.open(os.path.join(path_root,'tmp.png')).convert('RGB')
+    # final = final.resize((IUV_size[0], IUV_size[1]), Image.ANTIALIAS)
+    # final = np.array(final)[:,:,::-1]
+    # cv2.imwrite(IUV_save_path,final,[int(cv2.IMWRITE_PNG_COMPRESSION), 1])
     index = index+1
     print(index/len(IUV_ALL))
-
-
-
-# plt.show()
-
-# tmp = cv2.imread('./tmp.png')
-# # tmp = rotate(tmp,-180)
-# #
-# im[...,0] = im[...,0]*0.7 + tmp[...,0]*0.3
-# im[...,1] = im[...,1]*0.7 + tmp[...,1]*0.3
-# im[...,2] = im[...,2]*0.7 + tmp[...,2]*0.3
-# cv2.imshow('a',im)
-# cv2.waitKey(0)

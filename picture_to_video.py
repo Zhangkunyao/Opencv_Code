@@ -4,6 +4,8 @@ from basic_lib import Get_List
 from PIL import Image
 import numpy as np
 
+# 剪切图片生成video 为openpose做准备
+
 def img_process(img,loadsize):
     try :
         h, w ,_= img.shape
@@ -25,30 +27,56 @@ def img_process(img,loadsize):
         img = np.array(img)
         result[bias:bias+h,0:w,...] = img[0:h,0:w,...]
     result = result.astype(np.uint8)
-    return Image.fromarray(result)
+    return result
 
-img_root_path = '/media/kun/Dataset/Pose/DataSet/new_data/0001/cut/img'
-pose_root_path = '/media/kun/Dataset/Pose/DataSet/new_data/0001/cut/normal_result'
-_,img_all = Get_List(img_root_path)
-_,pose_all = Get_List(pose_root_path)
+def get_all_loc(file_path):
+    file = open(file_path, 'r')
+    listall = file.readlines()
+    listall = [i.rstrip('\n').split('\t')[:-1] for i in listall]
+    for i in range(len(listall)):
+        for j in range(len(listall[i])):
+            listall[i][j] = int(listall[i][j])
+    file.close()
+    return listall
 
-img_all.sort()
-pose_all.sort()
+target_img_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
+target_img = Image.open(target_img_path).convert('RGB')
+size_target = target_img.size
+
+img_root_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/img'
+name_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/img'
+txt_root_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/loc.txt'
+loc_all_source = get_all_loc(txt_root_path)
+
+_,name_all = Get_List(name_path)
+name_all.sort()
+
 fps = 30
 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-videoWriter = cv2.VideoWriter('测试_gp.avi', fourcc, fps, (512,256))
+videoWriter = cv2.VideoWriter('/media/kun/Dataset/Pose/DataSet/new_data/video_06/video_06_cut.avi',
+                              fourcc, fps, (size_target[0],size_target[0]))
 if not videoWriter.isOpened():
     print("video error")
     exit(0)
 
-for i in range(len(img_all)):
-    img = cv2.imread(os.path.join(img_root_path, img_all[i]))
-    pose = cv2.imread(os.path.join(pose_root_path, pose_all[i]))
-    img = img_process(img,256)
-    pose = img_process(pose, 256)
-    img = np.concatenate([pose, img], axis=1)
+for i in range(len(name_all)):
+    img_path = os.path.join(img_root_path,name_all[i])
+    img = cv2.imread(img_path)
+    # 定位
+    tmp = loc_all_source[i]
+    point = {'xmin': tmp[0], 'xmax': tmp[1], 'ymin': tmp[2], 'ymax': tmp[3]}
+    w = point['xmax'] - point['xmin']
+    h = point['ymax'] - point['ymin']
+    xmin = point['xmin']
+    xmax = point['xmax']
+    ymin = point['ymin']
+    ymax = point['ymax']
+
+    if xmax>xmin and ymax>ymin:
+        img = img[ymin:ymax, xmin:xmax, ...]
+    img = img_process(img,size_target[0])
     videoWriter.write(img)
-    print(1.0*i/len(img_all))
+    print(1.0*i/len(name_all))
 videoWriter.release()
 print('finish')
 

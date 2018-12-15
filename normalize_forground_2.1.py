@@ -102,6 +102,7 @@ source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/b
 
 source_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/save_result"
 save_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/normal_result"
+data_root = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/'
 
 loc_all_source = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/loc.txt")
 loc_all_target = get_all_loc("/home/kun/Documents/DataSet/video_06/cut/loc.txt")
@@ -135,12 +136,11 @@ target_x_var = target_scale[5]
 
 fps = 30
 fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-videoWriter = cv2.VideoWriter('wshp_27.avi', fourcc, fps, (target_shape[1],target_shape[0]))
+videoWriter = cv2.VideoWriter(os.path.join(data_root,'normal.avi'), fourcc, fps, (target_shape[1],target_shape[0]))
 
 # 主程序
 for i, pose_name in enumerate(source_imgs):
-    # if pose_name != '机械哥_bilibili_000000002066_rendered.png':
-    #     continue
+
     img_path = os.path.join(source_path, pose_name)
     source_pose_img = cv2.imread(img_path)  # input 256*256 img
 
@@ -194,14 +194,13 @@ for i, pose_name in enumerate(source_imgs):
                                             s_ymin:s_ymax,
                                             s_xmin:s_xmax, ...]
         result = result.astype(np.uint8)
-    # videoWriter.write(result.astype(np.uint8))
-    # cv2.imwrite(os.path.join(save_path, pose_name), result, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
+    videoWriter.write(result.astype(np.uint8))
+    cv2.imwrite(os.path.join(save_path, pose_name), result, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
     print(i / len(source_imgs))
-    result = cv2.resize(result, (int(target_shape[1]/2), int(target_shape[0]/2)), interpolation=cv2.INTER_CUBIC)
-    cv2.imshow('a',result)
-    key = cv2.waitKey(1)
-    if key == ord(" "):
-        print(pose_name)
-        cv2.waitKey(0)
-
+    # result = cv2.resize(result, (int(target_shape[1]/2), int(target_shape[0]/2)), interpolation=cv2.INTER_CUBIC)
+    # cv2.imshow('a',result)
+    # key = cv2.waitKey(1)
+    # if key == ord(" "):
+    #     print(pose_name)
+    #     cv2.waitKey(0)
 videoWriter.release()
