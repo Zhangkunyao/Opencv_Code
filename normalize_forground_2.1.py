@@ -79,13 +79,13 @@ def get_scale(source,source_h,source_w,target,target_h,target_w):
         w = point['xmax'] - point['xmin']
         h = point['ymax'] - point['ymin']
         if w > 20 and h > 20:
-            source_all.append([h/source_h,(point['ymax']+point['ymin'])/2/source_h,(point['xmax']+point['xmin'])/2.0/source_w])
+            source_all.append([h/source_h,point['ymax']/source_h,(point['xmax']+point['xmin'])/2.0/source_w])
     for loc in target:
         point = {'xmin': loc[0], 'xmax': loc[1], 'ymin': loc[2], 'ymax': loc[3]}
         w = point['xmax'] - point['xmin']
         h = point['ymax'] - point['ymin']
         if w > 20 and h > 20:
-            target_all.append([h/target_h,(point['ymax']+point['ymin'])/2/target_h,(point['xmax']+point['xmin'])/2.0/target_w])
+            target_all.append([h/target_h,point['ymax']/target_h,(point['xmax']+point['xmin'])/2.0/target_w])
 
     target_all = np.array(target_all)*1.0
     target_data = [target_all[:,0].mean(),target_all[:,0].var(ddof=1),
@@ -98,14 +98,14 @@ def get_scale(source,source_h,source_w,target,target_h,target_w):
     return target_data,source_data
 
 target_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
-source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/back_ground.png'
+source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
 
-source_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/save_result"
-save_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/normal_result"
-data_root = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/'
+source_path = "/home/kun/Documents/DataSet/video_06/forground/cut_expend"
+save_path = "/home/kun/Documents/DataSet/video_06/forground/normal_pose"
+data_root = '/home/kun/Documents/DataSet/video_06/forground/'
 
-loc_all_source = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/loc.txt")
-loc_all_target = get_all_loc("/home/kun/Documents/DataSet/video_06/cut/loc.txt")
+loc_all_source = get_all_loc("/home/kun/Documents/DataSet/video_06/forground/loc.txt")
+loc_all_target = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/loc.txt")
 
 _, source_imgs = Get_List(source_path)
 source_imgs.sort()
@@ -149,34 +149,32 @@ for i, pose_name in enumerate(source_imgs):
 
     w = point['xmax'] - point['xmin']
     h = point['ymax'] - point['ymin']
-    y = (point['ymax'] + point['ymin'])/2.0
+    # y = (point['ymax'] + point['ymin'])/2.0
+    y = point['ymax']
     x = (point['xmax'] + point['xmin'])/2.0
     if w < 10 or h < 10:
         result = np.zeros(target_shape)
-        result[..., 1] = 255
+        # result[..., 1] = 255
     else:
-        y_pose = ((y * 1.0 / source_shape[0] - source_y_mean) / source_y_var * target_y_var + target_y_mean) * \
-                 target_shape[0]
-
-        h_scale = ((h * 1.0 / source_shape[0] - source_h_mean) / source_h_var * target_h_var + target_h_mean) * \
+        y_pose = ((y * 1.0 / source_shape[0] - source_y_mean) / (source_y_var) * target_y_var + target_y_mean) * \
                  target_shape[0]
 
         scale = target_h_mean/source_h_mean*(target_shape[0]/source_shape[0])
 
-        x_pose = ((x * 1.0 / source_shape[1] - source_x_mean) / source_x_var * target_x_var + target_x_mean) * \
-                 target_shape[1]
-
-        source_pose_img = img_process(source_pose_img, [w, h])
+        # x_pose = ((x * 1.0 / source_shape[1] - source_x_mean) / (source_x_var) * target_x_var + target_x_mean) * \
+        #          target_shape[1]
+        x_pose = x/source_shape[1]*target_shape[1]
+        # source_pose_img = img_process(source_pose_img, [w, h])
         source_pose_img = cv2.resize(source_pose_img, (int(scale * w), int(scale * h)), interpolation=cv2.INTER_CUBIC)
 
         result = np.zeros(target_shape)
-        result[..., 1] = 255
+        # result[..., 1] = 255
 
         xmin = max(x_pose - source_pose_img.shape[1]/2.0, 0)
         xmax = min(x_pose + source_pose_img.shape[1]/2.0, target_shape[1])
 
-        ymin = max(y_pose - source_pose_img.shape[0]/2.0, 0)
-        ymax = min(y_pose + source_pose_img.shape[0]/2.0, target_shape[0])
+        ymin = max(y_pose - source_pose_img.shape[0], 0)
+        ymax = min(y_pose, target_shape[0])
 
         xmin = int(xmin)
         xmax = int(xmax)
@@ -187,12 +185,15 @@ for i, pose_name in enumerate(source_imgs):
         s_xmin = max(int(s_middle - (x_pose - xmin)),0)
         s_xmax = min(s_xmin+(xmax - xmin),source_pose_img.shape[1])
 
-        s_middle = int(source_pose_img.shape[0]/2)
-        s_ymin = max(int(s_middle - (y_pose - ymin)),0)
-        s_ymax = min(s_ymin+(ymax - ymin),source_pose_img.shape[0])
-        result[ymin:ymax, xmin:xmax, ...] = source_pose_img[
-                                            s_ymin:s_ymax,
-                                            s_xmin:s_xmax, ...]
+        s_middle = source_pose_img.shape[0]/2.0
+        s_ymax = min(int(s_middle + (ymax - ymin)/2.0), source_pose_img.shape[0])
+        s_ymin = max(s_ymax - (ymax - ymin),0)
+        try:
+            result[ymin:ymax, xmin:xmax, ...] = source_pose_img[
+                                                s_ymin:s_ymax,
+                                                s_xmin:s_xmax, ...]
+        except:
+            print("bad_img")
         result = result.astype(np.uint8)
     videoWriter.write(result.astype(np.uint8))
     cv2.imwrite(os.path.join(save_path, pose_name), result, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
@@ -203,4 +204,6 @@ for i, pose_name in enumerate(source_imgs):
     # if key == ord(" "):
     #     print(pose_name)
     #     cv2.waitKey(0)
+    # if key == ord("q"):
+    #     break
 videoWriter.release()

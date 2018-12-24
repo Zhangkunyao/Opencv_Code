@@ -11,24 +11,21 @@ two_camera.py:
 import cv2
 import numpy as np
 
-cap0 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/wshp.avi')
-cap1 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/densepose.avi')
+cap0 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/去除抖动/机械哥_bilibili/openpose/normal.avi')
+cap1 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/去除抖动/机械哥_bilibili/densepose/normal.avi')
 # ret = cap0.set(3, 320)
 # ret = cap0.set(4, 240)
 # ret = cap1.set(3, 320)
 # ret = cap1.set(4, 240)
 index = 0
 while cap0.isOpened() and cap1.isOpened():
-    if index<50:
-        ret0, frame0 = cap0.read()
-        index = index+1
-        continue
+
     ret0, frame0 = cap0.read()
     ret1, frame1 = cap1.read()
-    frame0 = frame0[:,256:,:]
-    frame1 = frame1[:,256:,:]
-    # frame0 = cv2.resize(frame0, (320,240),interpolation=cv2.INTER_CUBIC)
-    # frame1 = cv2.resize(frame1, (320,240), interpolation=cv2.INTER_CUBIC)
+    # frame0 = frame0[:,256:,:]
+    # frame1 = frame1[:,256:,:]
+    frame0 = cv2.resize(frame0, (640,480),interpolation=cv2.INTER_CUBIC)
+    frame1 = cv2.resize(frame1, (640,480), interpolation=cv2.INTER_CUBIC)
     out = np.concatenate([frame0,frame1],axis=1)
     # if ret0:
     #     cv2.imshow('frame0', frame0)

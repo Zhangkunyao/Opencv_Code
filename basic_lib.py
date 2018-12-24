@@ -163,3 +163,43 @@ def get_bbox(img):
             break
     down = index
     return {"min":(left,top),"max":(right,down),"xmax":right,"xmin":left,"ymin":top,"ymax":down}
+
+def ImageToIUV(im,IUV):
+    U = IUV[:,:,1]
+    V = IUV[:,:,2]
+    I = IUV[:,:,0]
+    TextureIm = np.zeros([24, 200, 200, 3]).astype(np.uint8)
+    ###
+    for PartInd in xrange(1,25):    ## Set to xrange(1,23) to ignore the face part.
+        x,y = np.where(I==PartInd)
+        u_current_points = U[x,y]   #  Pixels that belong to this specific part.
+        v_current_points = V[x,y]
+        v_tmp = ((255 - v_current_points) * 199. / 255.).astype(int)
+        u_tmp = (u_current_points * 199. / 255.).astype(int)
+        TextureIm[PartInd - 1,v_tmp,u_tmp,...] = im[x, y,...]
+    generated_image = np.zeros((1200, 800, 3)).astype(np.uint8)
+    for i in range(4):
+        for j in range(6):
+            generated_image[(200 * j):(200 * j + 200), (200 * i):(200 * i + 200),...] = TextureIm[(6 * i + j),...]
+    return generated_image
+
+def IUVToImage(Tex_Atlas,IUV):
+    TextureIm = np.zeros([24, 200, 200, 3]).astype(np.uint8)
+    for i in range(4):
+        for j in range(6):
+            TextureIm[(6 * i + j), :, :, :] = Tex_Atlas[(200 * j):(200 * j + 200), (200 * i):(200 * i + 200), :]
+    U = IUV[:,:,1]
+    V = IUV[:,:,2]
+    #
+    im = np.zeros(IUV.shape).astype(np.uint8)
+    ###
+    for PartInd in xrange(1,25):    ## Set to xrange(1,23) to ignore the face part.
+        tex = TextureIm[PartInd-1,:,:,:].squeeze() # get texture for each part.
+        ###############
+        x,y = np.where(IUV[:,:,0]==PartInd)
+        u_current_points = U[x,y]   #  Pixels that belong to this specific part.
+        v_current_points = V[x,y]
+        ##
+        current_points = tex[((255-v_current_points)*199./255.).astype(int),(u_current_points*199./255.).astype(int),...]
+        im[x,y,...] = current_points.astype(np.uint8)
+    return im

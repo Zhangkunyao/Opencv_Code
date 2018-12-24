@@ -97,111 +97,38 @@ def get_scale(source,source_h,source_w,target,target_h,target_w):
                    source_all[:, 2].mean(), source_all[:, 2].var(ddof=1),]
     return target_data,source_data
 
-target_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
-source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/back_ground.png'
+name_path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/img'
+path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/cut_expend'
+txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/loc.txt'
 
-source_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/save_result"
-save_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/normal_result"
+_, imgs = Get_List(path)
+_,name_change = Get_List(name_path)
+imgs.sort()
+name_change.sort()
 
-loc_all_source = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/loc.txt")
-loc_all_target = get_all_loc("/home/kun/Documents/DataSet/video_06/cut/loc.txt")
+loc_all_source = get_all_loc(txt_path)
 
-_, source_imgs = Get_List(source_path)
-source_imgs.sort()
+for index in range(len(imgs)):
+    path_pose = os.path.join(path,imgs[index])
+    pose = cv2.imread(path_pose)
 
-source_pose_img = cv2.imread(source_tmp_path)
-target_pose_img = cv2.imread(target_tmp_path)
-target_shape = target_pose_img.shape
-source_shape = source_pose_img.shape
+    path_img = os.path.join(name_path,name_change[index])
+    img = cv2.imread(path_img)
 
-
-target_scale,source_scale = get_scale(loc_all_source,source_shape[0]*1.0,source_shape[1]*1.0,
-                                      loc_all_target,target_shape[0]*1.0,target_shape[1]*1.0)
-
-source_h_mean = source_scale[0]
-source_h_var = source_scale[1]
-source_y_mean = source_scale[2]
-source_y_var = source_scale[3]
-source_x_mean = source_scale[4]
-source_x_var = source_scale[5]
-
-target_h_mean = target_scale[0]
-target_h_var = target_scale[1]
-target_y_mean = target_scale[2]
-target_y_var = target_scale[3]
-target_x_mean = target_scale[4]
-target_x_var = target_scale[5]
-
-
-fps = 30
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-videoWriter = cv2.VideoWriter('wshp_27.avi', fourcc, fps, (target_shape[1],target_shape[0]))
-
-# 主程序
-for i, pose_name in enumerate(source_imgs):
-    # if pose_name != '机械哥_bilibili_000000002066_rendered.png':
+    tmp = loc_all_source[index]
+    # # index = index + 1
+    # # if index<5369:
     #     continue
-    img_path = os.path.join(source_path, pose_name)
-    source_pose_img = cv2.imread(img_path)  # input 256*256 img
 
-    tmp = loc_all_source[i]
     point = {'xmin': tmp[0], 'xmax': tmp[1], 'ymin': tmp[2], 'ymax': tmp[3]}
 
     w = point['xmax'] - point['xmin']
     h = point['ymax'] - point['ymin']
-    y = (point['ymax'] + point['ymin'])/2.0
-    x = (point['xmax'] + point['xmin'])/2.0
-    if w < 10 or h < 10:
-        result = np.zeros(target_shape)
-        result[..., 1] = 255
-    else:
-        y_pose = ((y * 1.0 / source_shape[0] - source_y_mean) / source_y_var * target_y_var + target_y_mean) * \
-                 target_shape[0]
-
-        h_scale = ((h * 1.0 / source_shape[0] - source_h_mean) / source_h_var * target_h_var + target_h_mean) * \
-                 target_shape[0]
-
-        scale = target_h_mean/source_h_mean*(target_shape[0]/source_shape[0])
-
-        x_pose = ((x * 1.0 / source_shape[1] - source_x_mean) / source_x_var * target_x_var + target_x_mean) * \
-                 target_shape[1]
-
-        source_pose_img = img_process(source_pose_img, [w, h])
-        source_pose_img = cv2.resize(source_pose_img, (int(scale * w), int(scale * h)), interpolation=cv2.INTER_CUBIC)
-
-        result = np.zeros(target_shape)
-        result[..., 1] = 255
-
-        xmin = max(x_pose - source_pose_img.shape[1]/2.0, 0)
-        xmax = min(x_pose + source_pose_img.shape[1]/2.0, target_shape[1])
-
-        ymin = max(y_pose - source_pose_img.shape[0]/2.0, 0)
-        ymax = min(y_pose + source_pose_img.shape[0]/2.0, target_shape[0])
-
-        xmin = int(xmin)
-        xmax = int(xmax)
-        ymin = int(ymin)
-        ymax = int(ymax)
-        # source坐标
-        s_middle = int(source_pose_img.shape[1]/2)
-        s_xmin = max(int(s_middle - (x_pose - xmin)),0)
-        s_xmax = min(s_xmin+(xmax - xmin),source_pose_img.shape[1])
-
-        s_middle = int(source_pose_img.shape[0]/2)
-        s_ymin = max(int(s_middle - (y_pose - ymin)),0)
-        s_ymax = min(s_ymin+(ymax - ymin),source_pose_img.shape[0])
-        result[ymin:ymax, xmin:xmax, ...] = source_pose_img[
-                                            s_ymin:s_ymax,
-                                            s_xmin:s_xmax, ...]
-        result = result.astype(np.uint8)
-    # videoWriter.write(result.astype(np.uint8))
-    # cv2.imwrite(os.path.join(save_path, pose_name), result, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
-    print(i / len(source_imgs))
-    result = cv2.resize(result, (int(target_shape[1]/2), int(target_shape[0]/2)), interpolation=cv2.INTER_CUBIC)
-    cv2.imshow('a',result)
-    key = cv2.waitKey(1)
-    if key == ord(" "):
-        print(pose_name)
-        cv2.waitKey(0)
-
-videoWriter.release()
+    if w>0 and h>0:
+        pose = img_process(pose, [w, h])
+    # out = np.concatenate([img,pose],1)
+    # cv2.imshow('a',out)
+    # cv2.waitKey(1)
+    cv2.imwrite(path_pose,pose,[int(cv2.IMWRITE_PNG_COMPRESSION), 1])
+    print(index)
+    # os.rename(path_pose, os.path.join(path, name_change[index]))
