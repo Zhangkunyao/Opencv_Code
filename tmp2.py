@@ -3,135 +3,177 @@ import cv2
 import time
 import numpy as np
 import os
-from basic_lib import Get_List
+from basic_lib import Get_List,ImageToIUV,IUVToImage
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import math
 
-a = cv2.imread('/home/kun/Documents/img/1.png')
-cv2.imshow('a',a)
-cv2.waitKey(0)
-# # 这个版本主要解决scale上的变化问题，通过求解 y 与 h之间的关系，解出scale
-# # 把跑出来的测试结果重新resize 用于前景背景之间的融合
-# def get_all_loc(file_path):
-#     file = open(file_path, 'r')
-#     listall = file.readlines()
-#     listall = [i.rstrip('\n').split('\t')[:-1] for i in listall]
-#     for i in range(len(listall)):
-#         for j in range(len(listall[i])):
-#             listall[i][j] = int(listall[i][j])
-#     file.close()
-#     return listall
+# target_img_path = '/media/kun/Dataset/Pose/DataSet/new_data/0001_cut/back_ground.png'
+# target_img = cv2.imread(target_img_path)
+# size_target = target_img.shape
 #
-# # 输入图片 目标尺寸 原始尺寸
-# def img_process(img, org_size):
-#     roi_region = None
-#     loadsize = img.shape[0]
-#     w = org_size[0]
-#     h = org_size[1]
-#     if h >= w:
-#         w = int(w * loadsize / h)
-#         h = loadsize
-#         bias = int((loadsize - w) / 2)
-#         img = np.array(img)
-#         roi_region = img[0:h, bias:bias + w, ...]
-#     if w > h:
-#         h = int(h * loadsize / w)
-#         w = loadsize
-#         bias = int((loadsize - h) / 2)
-#         img = np.array(img)
-#         roi_region = img[bias:bias + h, 0:w, ...]
-#     w = org_size[0]
-#     h = org_size[1]
-#     return cv2.resize(roi_region, (w, h), interpolation=cv2.INTER_CUBIC)
+# img_root_path = '/media/kun/Dataset/Pose/DataSet/new_data/0001_cut/img'
+# _,name_all = Get_List(img_root_path)
+# name_all.sort()
 #
-# def get_kmeans(data,n_clusters=3):
-#     # 返回x轴和y轴的聚类坐标
-#     x = [i[0] for i in data]
-#     y = [i[1] for i in data]
-#     # x 部分
-#     consit = np.array([10 for i in range(len(x))])
-#     x = np.array(x)
-#     point_loc = np.array([consit, x])
-#     point_loc = np.transpose(point_loc)
-#     kmeans_cell = KMeans(n_clusters=n_clusters, random_state=9)
-#     y_pred = kmeans_cell.fit_predict(point_loc)
-#     plt.scatter(x, y, c=y_pred)
-#     plt.show()
-#     print(kmeans_cell.cluster_centers_)
-#     x_result = kmeans_cell.cluster_centers_
-#     # y 部分
-#     consit = np.array([10 for i in range(len(y))])
-#     y = np.array(y)
-#     point_loc = np.array([consit, y])
-#     point_loc = np.transpose(point_loc)
-#     kmeans_cell = KMeans(n_clusters=n_clusters, random_state=9)
-#     y_pred = kmeans_cell.fit_predict(point_loc)
-#     plt.scatter(x, y, c=y_pred)
-#     plt.show()
-#     print(kmeans_cell.cluster_centers_)
-#     y_result = kmeans_cell.cluster_centers_
-#     return [x_result,y_result]
+# fps = 30
+# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+# videoWriter = cv2.VideoWriter('/media/kun/Dataset/Pose/DataSet/new_data/0001_cut/0001_cut_densepose.avi',
+#                               fourcc, fps, (size_target[1],size_target[0]))
+# if not videoWriter.isOpened():
+#     print("video error")
+#     exit(0)
 #
-# def get_scale(source,source_h,source_w,target,target_h,target_w):
-#     # source = source[0:len(source)-100]
-#     source_all = []
-#     target_all = []
-#     for loc in source:
-#         point = {'xmin': loc[0], 'xmax': loc[1], 'ymin': loc[2], 'ymax': loc[3]}
-#         w = point['xmax'] - point['xmin']
-#         h = point['ymax'] - point['ymin']
-#         if w > 20 and h > 20:
-#             source_all.append([h/source_h,(point['ymax']+point['ymin'])/2/source_h,(point['xmax']+point['xmin'])/2.0/source_w])
-#     for loc in target:
-#         point = {'xmin': loc[0], 'xmax': loc[1], 'ymin': loc[2], 'ymax': loc[3]}
-#         w = point['xmax'] - point['xmin']
-#         h = point['ymax'] - point['ymin']
-#         if w > 20 and h > 20:
-#             target_all.append([h/target_h,(point['ymax']+point['ymin'])/2/target_h,(point['xmax']+point['xmin'])/2.0/target_w])
+# for i in range(len(name_all)):
+#     img_path = os.path.join(img_root_path,name_all[i])
+#     img = cv2.imread(img_path)
+#     videoWriter.write(img)
+#     print(1.0*i/len(name_all))
+# videoWriter.release()
+# print('finish')
+
+
+# txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/x_loc.txt'
+# dense_pose_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/org'
+# _,name_all = Get_List(dense_pose_path)
+# name_all.sort()
 #
-#     target_all = np.array(target_all)*1.0
-#     target_data = [target_all[:,0].mean(),target_all[:,0].var(ddof=1),
-#                    target_all[:,1].mean(),target_all[:,1].var(ddof=1),
-#                    target_all[:, 2].mean(), target_all[:, 2].var(ddof=1)]
-#     source_all = np.array(source_all) * 1.0
-#     source_data = [source_all[:,0].mean(),source_all[:,0].var(ddof=1),
-#                    source_all[:,1].mean(),source_all[:,1].var(ddof=1),
-#                    source_all[:, 2].mean(), source_all[:, 2].var(ddof=1),]
-#     return target_data,source_data
+# file = open(txt_path, 'w')
 #
-# name_path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/img'
-# path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/cut_expend'
-# txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/loc.txt'
+# for i,name in enumerate(name_all):
+#     img_path = os.path.join(dense_pose_path,name)
+#     IUV = cv2.imread(img_path)
+#     I = IUV[...,0]
+#     # loc_x = []
+#     # loc_y = []
+#     # loc_id = []
+#     # tmp = np.zeros(I.shape)
+#     # x_loc_final=0
+#     # for PartInd in range(1, 25):
+#     #     x, y = np.where(I == PartInd)
+#     #     if len(x)!=0:
+#     #         loc_x.append(x.mean())
+#     #         loc_y.append(y.mean())
+#     #         loc_id.append(PartInd)
+#     # if len(loc_x) == 0:
+#     #     x_loc_final=0
+#     #     print("error")
+#     # else:
+#     #     index = loc_y.index(max(loc_y))
+#     #     x_loc_final = loc_x[index]
+#     #     PartInd = loc_id[index]
+#     PartInd = 6
+#     x, y = np.where(I == PartInd)
+#     if len(x) == 0:
+#         x_loc_final = IUV.shape[1]/2
+#     else:
+#         x_loc_final = x.mean()
+#     # tmp[I>0]=128
+#     # tmp[x, y] = 255
+#     # cv2.imshow('a',tmp.astype(np.uint8))
+#     # cv2.waitKey(0)
+#     file.write(str(int(x_loc_final)))
+#     file.write('\n')
+#     print(i/len(name_all))
+# file.close()
+# densepose_img = cv2.imread('./video/video_06_IUV.png')
+# I = densepose_img[:,:,0]
+# tmp=np.zeros(densepose_img.shape)
+# img_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/save_result'
+# video_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/video_iuv_refresh.avi'
+# cap0 = cv2.VideoCapture(video_path)
+# _,name_pose = Get_List(img_path)
+# name_pose.sort()
+# for name in name_pose:
+#     img = cv2.imread(os.path.join(img_path,name))
+#     ret0, frame0 = cap0.read()
+#     frame0 = cv2.resize(frame0, (512, 512), interpolation=cv2.INTER_CUBIC)
+#     img = cv2.resize(img, (512, 512), interpolation=cv2.INTER_CUBIC)
+#     result = np.concatenate([frame0,img],axis=1)
+#     cv2.imshow('1',result.astype(np.uint8))
+#     # cv2.waitKey(10)
 #
-# _, imgs = Get_List(path)
-# _,name_change = Get_List(name_path)
-# imgs.sort()
-# name_change.sort()
 #
-# loc_all_source = get_all_loc(txt_path)
-#
-# for index in range(len(imgs)):
-#     path_pose = os.path.join(path,imgs[index])
-#     pose = cv2.imread(path_pose)
-#
-#     path_img = os.path.join(name_path,name_change[index])
-#     img = cv2.imread(path_img)
-#
-#     tmp = loc_all_source[index]
-#     # # index = index + 1
-#     # # if index<5369:
-#     #     continue
-#
-#     point = {'xmin': tmp[0], 'xmax': tmp[1], 'ymin': tmp[2], 'ymax': tmp[3]}
-#
-#     w = point['xmax'] - point['xmin']
-#     h = point['ymax'] - point['ymin']
-#     if w>0 and h>0:
-#         pose = img_process(pose, [w, h])
-#     # out = np.concatenate([img,pose],1)
-#     # cv2.imshow('a',out)
-#     # cv2.waitKey(1)
-#     cv2.imwrite(path_pose,pose,[int(cv2.IMWRITE_PNG_COMPRESSION), 1])
-#     print(index)
-#     # os.rename(path_pose, os.path.join(path, name_change[index]))
+#     # frame1 = cv2.resize(frame1, (640,480), interpolation=cv2.INTER_CUBIC)
+#     # out = np.concatenate([frame0,frame1],axis=1)
+#     # # if ret0:
+#     # #     cv2.imshow('frame0', frame0)
+#     # #     cv2.setWindowTitle('frame0','On Top')
+#     # # if ret1:
+#     # cv2.imshow('frame1', out)
+#     # # cv2.moveWindow('frame1', x=frame0.shape[1], y=0)
+#     # # cv2.moveWindow('frame1', x=0, y=0)
+#     #
+#     key = cv2.waitKey(delay=10)
+#     if key == ord("q"):
+#         break
+#     if key == ord(" "):
+#         cv2.waitKey(delay=0)
+
+
+# pose_test = cv2.imread('./video/机械哥_bilibili_IUV.png')
+# body = [[1,2],[0,0,255]]
+# head = [[23,24],[0,255,0]]
+# R_Arm = [[3,16,18,20,22],[255,0,0]]
+# L_Arm = [[4,15,17,19,21],[255,255,0]]
+# R_Leg = [[6,9,13,7,11],[0,255,255]]
+# L_Leg = [[5,10,14,8,12],[255,0,255]]
+# dict_all = {'body':body,'head':head,'R_Arm':R_Arm,'L_Arm':L_Arm,'R_Leg':R_Leg,'L_Leg':L_Leg}
+# path = '/media/kun/Dataset/Pose/DataSet/new_data/bilibili_3/DensePoseProcess/org'
+# _,name_all =  Get_List(path)
+# name_all.sort()
+# for name in name_all:
+#     # bilibili_3_000000002390_rendered.png
+#     pose = cv2.imread(os.path.join(path,name))
+#     I = pose[:,:,0]
+#     out = np.zeros(pose.shape).astype(np.uint8)
+#     for PartInd in range(1, 25):
+#         x, y = np.where(I == PartInd)
+#         for colour in dict_all:
+#             idx = dict_all[colour][0]
+#             if PartInd in idx:
+#                 out[x,y,0]=dict_all[colour][1][0]
+#                 out[x, y, 1] = dict_all[colour][1][1]
+#                 out[x, y, 2] = dict_all[colour][1][2]
+#     cv2.imshow('a',out)
+#     key = cv2.waitKey(1)
+#     if key == ord(' '):
+#         print(name)
+#         cv2.waitKey(0)
+
+
+# path = '/media/kun/Dataset/Pose/DataSet/new_video/video_1/img/'
+# _,name_all = Get_List(path)
+# name_all.sort()
+# for name in name_all:
+#     img = cv2.imread(os.path.join(path,name))
+#     img = img*0
+#     img[...,1]=255
+#     cv2.imshow('img',img)
+#     cv2.imwrite('basic_zero.png',img)
+    # key = cv2.waitKey(1)
+    # if key ==ord(' '):
+    #     print(name)
+
+# a=[i for i in range(10)]
+# a = np.array(a)
+# plt.plot(a,'ro')
+# plt.show()
+pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/org'
+texture_1_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/uv_unwrap_0.1'
+texture_2_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/uv_unwrap'
+_,tex_name_1 = Get_List(texture_1_path)
+_,tex_name_2 = Get_List(texture_2_path)
+_,pose_name = Get_List(pose_root)
+tex_name_1.sort()
+tex_name_2.sort()
+pose_name.sort()
+for name_1,name_2,name_3 in zip(tex_name_1,tex_name_2,pose_name):
+    tex_img_1 = cv2.imread(os.path.join(texture_1_path,name_1))
+    tex_img_2 = cv2.imread(os.path.join(texture_2_path, name_2))
+    pose_img = cv2.imread(os.path.join(pose_root, name_3))
+    result_1 = IUVToImage(tex_img_1,pose_img)
+    result_2 = IUVToImage(tex_img_2, pose_img)
+    result = np.concatenate([result_1, result_2], axis=1)
+    cv2.imshow('a',result)
+    cv2.waitKey(1)

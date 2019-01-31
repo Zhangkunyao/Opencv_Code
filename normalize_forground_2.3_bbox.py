@@ -8,6 +8,14 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 import math
 
+def write_data(txt_path,data):
+    file = open(txt_path, 'a')
+    for tmp in data:
+        file.write(str(tmp))
+        file.write('\t')
+    file.write('\n')
+    file.close()
+
 # 这个版本主要解决scale上的变化问题，通过求解 y 与 h之间的关系，解出scale
 # 把跑出来的测试结果重新resize 用于前景背景之间的融合
 def get_all_loc(file_path):
@@ -21,7 +29,7 @@ def get_all_loc(file_path):
     return listall
 
 # 输入图片 目标尺寸 原始尺寸
-def img_process(img, org_size):
+def img_process(img, org_size,pose):
     roi_region = None
     loadsize = img.shape[0]
     w = org_size[0]
@@ -40,7 +48,10 @@ def img_process(img, org_size):
         roi_region = img[bias:bias + h, 0:w, ...]
     w = org_size[0]
     h = org_size[1]
-    return cv2.resize(roi_region, (w, h), interpolation=cv2.INTER_CUBIC)
+    tmp = cv2.resize(roi_region, (w, h), interpolation=cv2.INTER_CUBIC)
+    x,y = np.where(pose==0)
+    tmp[x,y,1] = 255
+    return tmp
 
 def get_kmeans(data,n_clusters=3):
     # 返回x轴和y轴的聚类坐标
@@ -97,18 +108,19 @@ def get_scale(source,source_h,source_w,target,target_h,target_w):
                    source_all[:, 2].mean(), source_all[:, 2].var(ddof=1),]
     return target_data,source_data
 
-target_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
-source_tmp_path = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/back_ground.png'
+source_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/'
+target_root = '/media/kun/Dataset/Pose/DataSet/new_video/video_1'
+print(source_root)
 
-source_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/save_result_big"
-save_path = "/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/normal_result_big"
-data_root = '/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/'
+source_tmp_path = os.path.join(source_root,'back_ground.png')
+target_tmp_path = os.path.join(target_root,'back_ground.png')
 
-loc_all_source = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/机械哥_bilibili/DensePoseProcess/loc.txt")
-loc_all_target = get_all_loc("/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess/loc.txt")
+source_data_root = os.path.join(source_root,'DensePoseProcess')
+source_org_path = os.path.join(source_data_root,'org')
+save_path = os.path.join(source_data_root,'normal_loc.txt')
 
-_, source_imgs = Get_List(source_path)
-source_imgs.sort()
+loc_all_source = get_all_loc(os.path.join(source_root,'DensePoseProcess','loc.txt'))
+loc_all_target = get_all_loc(os.path.join(target_root,'DensePoseProcess','loc.txt'))
 
 source_pose_img = cv2.imread(source_tmp_path)
 target_pose_img = cv2.imread(target_tmp_path)
@@ -132,48 +144,43 @@ target_y_mean = target_scale[2]
 target_y_var = target_scale[3]
 target_x_mean = target_scale[4]
 target_x_var = target_scale[5]
-
-
-fps = 30
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-videoWriter = cv2.VideoWriter(os.path.join(data_root,'normal_big.avi'), fourcc, fps, (target_shape[1],target_shape[0]))
-
 # 主程序
-for i, pose_name in enumerate(source_imgs):
+for index in range(len(loc_all_source)):
 
-    img_path = os.path.join(source_path, pose_name)
-    source_pose_img = cv2.imread(img_path)  # input 256*256 img
-
-    tmp = loc_all_source[i]
+    tmp = loc_all_source[index]
     point = {'xmin': tmp[0], 'xmax': tmp[1], 'ymin': tmp[2], 'ymax': tmp[3]}
 
     w = point['xmax'] - point['xmin']
     h = point['ymax'] - point['ymin']
-    # y = (point['ymax'] + point['ymin'])/2.0
     y = point['ymax']
     x = (point['xmax'] + point['xmin'])/2.0
     if w < 10 or h < 10:
-        result = np.zeros(target_shape)
-        result[..., 1] = 255
+        result = [0,0,0,0]
     else:
-        y_pose = ((y * 1.0 / source_shape[0] - source_y_mean) / (source_y_var) * target_y_var + target_y_mean) * \
-                 target_shape[0]
+
 
         scale = target_h_mean/source_h_mean*(target_shape[0]/source_shape[0])
+        # 得出放大后的尺寸
+        scale_w = int(w * scale)
+        scale_h = int(h * scale)
+        w_max = int(target_shape[1]*scale)
+        # 计算位置
+        x_pose = int((x/source_shape[1] - source_x_mean+0.5)*w_max)
+        y_pose = int((y * 1.0 / source_shape[0] - source_y_mean + target_y_mean) * target_shape[0])
 
-        # x_pose = ((x * 1.0 / source_shape[1] - source_x_mean) / (source_x_var) * target_x_var + target_x_mean) * \
-        #          target_shape[1]
-        x_pose = x/source_shape[1]*target_shape[1]
-        source_pose_img = img_process(source_pose_img, [w, h])
-        source_pose_img = cv2.resize(source_pose_img, (int(scale * w), int(scale * h)), interpolation=cv2.INTER_CUBIC)
+        xmin = int(x_pose - scale_w/2)
+        xmax = int(x_pose + scale_w/2)
+        if xmax-xmin<scale_w:
+            xmax = xmax+1
+        elif xmax-xmin>scale_w:
+            xmax = xmax - 1
+        # 计算偏差量
+        delt_x_min = xmin - max(xmin, 0)
+        delt_x_max = xmax - min(xmax, w_max)
+        xmin = max(xmin, 0)
+        xmax = min(xmax, w_max)
 
-        result = np.zeros(target_shape)
-        result[..., 1] = 255
-
-        xmin = max(x_pose - source_pose_img.shape[1]/2.0, 0)
-        xmax = min(x_pose + source_pose_img.shape[1]/2.0, target_shape[1])
-
-        ymin = max(y_pose - source_pose_img.shape[0], 0)
+        ymin = max(y_pose - scale_h, 0)
         ymax = min(y_pose, target_shape[0])
 
         xmin = int(xmin)
@@ -181,29 +188,14 @@ for i, pose_name in enumerate(source_imgs):
         ymin = int(ymin)
         ymax = int(ymax)
         # source坐标
-        s_middle = int(source_pose_img.shape[1]/2)
-        s_xmin = max(int(s_middle - (x_pose - xmin)),0)
-        s_xmax = min(s_xmin+(xmax - xmin),source_pose_img.shape[1])
+        s_xmin = 0 + abs(delt_x_min)
+        s_xmax = scale_w - abs(delt_x_max)
 
-        s_middle = source_pose_img.shape[0]/2.0
-        s_ymax = min(int(s_middle + (ymax - ymin)/2.0), source_pose_img.shape[0])
+        s_middle = scale_h/2.0
+        s_ymax = min(int(s_middle + (ymax - ymin)/2.0), scale_h)
         s_ymin = max(s_ymax - (ymax - ymin),0)
-        try:
-            result[ymin:ymax, xmin:xmax, ...] = source_pose_img[
-                                                s_ymin:s_ymax,
-                                                s_xmin:s_xmax, ...]
-        except:
-            print("bad_img")
-        result = result.astype(np.uint8)
-    videoWriter.write(result.astype(np.uint8))
-    cv2.imwrite(os.path.join(save_path, pose_name), result, [int(cv2.IMWRITE_PNG_COMPRESSION), 1])
-    print(i / len(source_imgs))
-    # result = cv2.resize(result, (int(target_shape[1]/2), int(target_shape[0]/2)), interpolation=cv2.INTER_CUBIC)
-    # cv2.imshow('a',result)
-    # key = cv2.waitKey(1)
-    # if key == ord(" "):
-    #     print(pose_name)
-    #     cv2.waitKey(0)
-    # if key == ord("q"):
-    #     break
-videoWriter.release()
+
+        delt = int((w_max-target_shape[1])/2)
+        write_data(save_path,[scale_w,scale_h,xmin,xmax,ymin,ymax,s_xmin,s_xmax,s_ymin,s_ymax,delt,w_max])
+
+    print(index / len(loc_all_source))

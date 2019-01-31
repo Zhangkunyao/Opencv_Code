@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import cv2
 def Get_List(path):
     files = os.listdir(path);
     dirList = []
@@ -170,7 +171,7 @@ def ImageToIUV(im,IUV):
     I = IUV[:,:,0]
     TextureIm = np.zeros([24, 200, 200, 3]).astype(np.uint8)
     ###
-    for PartInd in xrange(1,25):    ## Set to xrange(1,23) to ignore the face part.
+    for PartInd in range(1,25):    ## Set to xrange(1,23) to ignore the face part.
         x,y = np.where(I==PartInd)
         u_current_points = U[x,y]   #  Pixels that belong to this specific part.
         v_current_points = V[x,y]
@@ -193,7 +194,7 @@ def IUVToImage(Tex_Atlas,IUV):
     #
     im = np.zeros(IUV.shape).astype(np.uint8)
     ###
-    for PartInd in xrange(1,25):    ## Set to xrange(1,23) to ignore the face part.
+    for PartInd in range(1,25):    ## Set to xrange(1,23) to ignore the face part.
         tex = TextureIm[PartInd-1,:,:,:].squeeze() # get texture for each part.
         ###############
         x,y = np.where(IUV[:,:,0]==PartInd)

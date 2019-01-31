@@ -20,7 +20,6 @@ star_flg = False
 while cap0.isOpened():
     ret0, frame0 = cap0.read()
 
-
     if star_flg:
         videoWriter.write(frame0)
         frame0 = cv2.putText(frame0, "start write!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)

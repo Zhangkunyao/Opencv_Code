@@ -20,8 +20,8 @@ def text_save(filename, data):
     file.write('\n')
     file.close()
 
-IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/org'
-IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/芭蕾_cut/DensePoseProcess/I'
+IUV_path_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/org'
+IUV_save_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/I'
 
 target_img_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/back_ground.png'
 target_img = Image.open(target_img_path).convert('RGB')

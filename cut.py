@@ -44,15 +44,15 @@ target_img = Image.open(target_img_path).convert('RGB')
 size_target = target_img.size
 
 kernel = np.ones((5,5),np.uint8)
-pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/org'
-img_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img'
-WSHP_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/org'
+pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/org'
+img_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/img'
+WSHP_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/org'
 
-save_img_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/img'
-save_pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/org'
-save_process_pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/pose'
+save_img_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/img'
+save_pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/org'
+save_process_pose_root = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/pose'
 
-txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/video_27/DensePoseProcess/loc.txt'
+txt_path = '/media/kun/Dataset/Pose/DataSet/new_data/胖子/DensePoseProcess/loc.txt'
 
 _,img_names = Get_List(pose_root)
 img_names.sort()
@@ -64,7 +64,7 @@ y_max_filter = [0 for i in range(10)]
 
 for i in range(len(img_names)):
     name = img_names[i]
-    img_path = os.path.join(img_root, name)
+    img_path = os.path.join(img_root, name[:-8]+'.png')
     pose_path = os.path.join(pose_root, name)
     wshp_path = os.path.join(WSHP_root, name)
 
@@ -78,7 +78,6 @@ for i in range(len(img_names)):
     # wshp[wshp < 0] = 0
     wshp = cv2.morphologyEx(wshp, cv2.MORPH_CLOSE, kernel)
 
-    out = cv2.bitwise_and(img,wshp)
     zero_idx = wshp == 0
     img[zero_idx[...,0],0] = 0
     img[zero_idx[..., 1], 1] = 255
@@ -120,7 +119,7 @@ for i in range(len(img_names)):
 
     tmp = os.path.join(save_process_pose_root, name)
     DenseposeProcess(pose,size_target,tmp)
-    img.save(os.path.join(save_img_root,name))
+    img.save(os.path.join(save_img_root,name[:-8]+'.png'))
     pose.save(os.path.join(save_pose_root,name))
     print(i/len(img_names))
 print('finished')

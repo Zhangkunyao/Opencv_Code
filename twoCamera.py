@@ -10,9 +10,14 @@ two_camera.py:
 
 import cv2
 import numpy as np
-
-cap0 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/去除抖动/机械哥_bilibili/openpose/normal.avi')
-cap1 = cv2.VideoCapture('/home/kun/Documents/DataSet/video/Densepose/去除抖动/机械哥_bilibili/densepose/normal.avi')
+# 贴图
+path_old = '/home/kun/Documents/DataSet/video/Densepose/贴图方法对比/video_0.1_keepface_test.avi'
+path_new = '/home/kun/Documents/DataSet/video/Densepose/贴图方法对比/分part贴图/video_part_0.1.avi'
+# 时间
+path_1 = '/home/kun/Documents/DataSet/video/Densepose/IUV_Refresh0.1/机械哥bilibili/video.avi'
+path_2 = '/home/kun/Documents/DataSet/video/Densepose/time/video.avi'
+cap0 = cv2.VideoCapture(path_1)
+cap1 = cv2.VideoCapture(path_2)
 # ret = cap0.set(3, 320)
 # ret = cap0.set(4, 240)
 # ret = cap1.set(3, 320)
@@ -22,10 +27,10 @@ while cap0.isOpened() and cap1.isOpened():
 
     ret0, frame0 = cap0.read()
     ret1, frame1 = cap1.read()
-    # frame0 = frame0[:,256:,:]
-    # frame1 = frame1[:,256:,:]
-    frame0 = cv2.resize(frame0, (640,480),interpolation=cv2.INTER_CUBIC)
-    frame1 = cv2.resize(frame1, (640,480), interpolation=cv2.INTER_CUBIC)
+    frame0 = frame0[:,256:,:]
+    frame1 = frame1[:,256:,:]
+    frame0 = cv2.resize(frame0, (640,960),interpolation=cv2.INTER_CUBIC)
+    frame1 = cv2.resize(frame1, (640,960), interpolation=cv2.INTER_CUBIC)
     out = np.concatenate([frame0,frame1],axis=1)
     # if ret0:
     #     cv2.imshow('frame0', frame0)
