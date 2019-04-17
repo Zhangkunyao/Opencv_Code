@@ -49,8 +49,8 @@ def read_json_file(body_json_name):
             pose_dict[list_name[tmp]] = [int(pose_list[i]), int((pose_list[i + 1]))]
     return pose_dict
 
-body_json_path = "/media/kun/Dataset/Pose/DataSet/new_video/video_1/openpose/body_json"
-file_path = '/media/kun/Dataset/Pose/DataSet/new_video/video_1/openpose/body_loc.txt'
+body_json_path = "/media/kun/Dataset/Pose/DataSet/data_rebuilt/video_3/openpose/body_json"
+file_path = '/media/kun/Dataset/Pose/DataSet/data_rebuilt/video_3/openpose/body_loc.txt'
 # 文件路径确定
 _,body_json_name_list = Get_List(body_json_path)
 body_json_name_list.sort()

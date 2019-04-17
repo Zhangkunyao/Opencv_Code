@@ -86,6 +86,7 @@ for index in range(len(name_IUV_all)):
     w_min = min(shape_w_all)-1
     I = pose_org[:,:,0]
 
+
     for part in sub_part:
         out = None
         tmp = I>255
@@ -102,14 +103,6 @@ for index in range(len(name_IUV_all)):
 
         tmp = np.array(tmp[...,0]+tmp[...,1]+tmp[...,2])
         x,y = np.where(tmp>0)
-
-        x[x >= h_min] = h_min-1
-        y[y >= w_min] = w_min-1
-
-        # if part['name'] == 'body' and len(x)!=0 and len(y)!=0 and (max(x) - min(x))!=0 and (max(y) - min(y))!=0:
-        #     tmp2 = tmp[min(x):max(x), min(y):max(y)]
-        #     cv2.imshow('tmp2', tmp2)
-        #     cv2.waitKey(0)
 
         save_path = os.path.join(save_root,part['name'])
         if len(x)!=0:
@@ -142,10 +135,11 @@ for index in range(len(name_IUV_all)):
             pose_out = np.zeros((256, 256,3)).astype(np.uint8)
             img_out[..., 1] = 255
             IUV_map_out[..., 1] = 255
-
-        cv2.imwrite(os.path.join(save_path,'pose',name_pose_pro_all[index]),pose_out)
-        cv2.imwrite(os.path.join(save_path, 'img', name_img_all[index]), img_out)
-        cv2.imwrite(os.path.join(save_path, 'IUV_map', name_IUV_all[index]), IUV_map_out)
+        cv2.imshow('a',img_out)
+        cv2.waitKey(0)
+        # cv2.imwrite(os.path.join(save_path,'pose',name_pose_pro_all[index]),pose_out)
+        # cv2.imwrite(os.path.join(save_path, 'img', name_img_all[index]), img_out)
+        # cv2.imwrite(os.path.join(save_path, 'IUV_map', name_IUV_all[index]), IUV_map_out)
     print(index*1.0/len(name_IUV_all))
     # out = np.array(out.rotate(90))
     # cv2.imshow('head',out)

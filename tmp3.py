@@ -1,64 +1,86 @@
-# -*-coding:utf8-*-#
-__author__ = 'play4fun'
+# -*- coding: utf-8 -*-
+
 """
-create time:15-10-25 下午12:20
-实 上我是怎么做的呢 我们使用图像编  件打开 入图像 
-添加一个 图层 
-使用笔刷工具在  的地方使用白色绘制 比如头发  子 球等 
- 使 用 色笔刷在不  的地方绘制 比如 logo 草地等 。
- 然后将其他地方用灰 色填充 保存成新的掩码图像。
- 在 OpenCV 中导入 个掩模图像 根据新的 掩码图像对原来的掩模图像  编 。
+two_camera.py:
 """
 
-import numpy as np
 import cv2
-from matplotlib import pyplot as plt
+import numpy as np
+from basic_lib import Get_List
+import random
+import os
+import time
 
-# GCD_BGD（=0），背景；
-#
-# GCD_FGD（=1），前景；
-#
-# GCD_PR_BGD（=2），可能是背景；
-#
-# GCD_PR_FGD（=3），可能是前景。
-kernel_small = np.ones((5,5),np.uint8)
-kernel_big = np.ones((50,50),np.uint8)
-img = cv2.imread('./video/video_06.png')
-mask = cv2.imread('./video/video_06_IUV.png')
-mask = mask[...,0] + mask[...,1] + mask[...,2]
-mask[mask>0] = 1
-mask = cv2.dilate(mask,kernel_small)
+def Get_all_IUV_point(IUV):
+    generated_image = np.zeros((1200, 800)).astype(np.uint8)
+    ###
+    for PartInd in range(1, 25):  ## Set to xrange(1,23) to ignore the face part.
+        x, y = np.where(IUV[:, :, 0] == PartInd)
+        u_current_points = IUV[:, :, 1][x, y]  # Pixels that belong to this specific part.
+        v_current_points = IUV[:, :, 2][x, y]
+        v_tmp = ((255 - v_current_points) * 199. / 255.).astype(int)
+        u_tmp = (u_current_points * 199. / 255.).astype(int)
+        i = (PartInd - 1) // 6
+        j = (PartInd - 1) % 6
+        generated_image[(200 * j) + v_tmp, (200 * i) + u_tmp] = 255
+    return generated_image
 
-# 确定前景
-forground = cv2.erode(mask,kernel_big)
-# 确定前景
-prob_forground = cv2.dilate(mask,kernel_big)
-prob_forground = prob_forground - forground
+def IUVToImage(Tex_Atlas,IUV):
+    for PartInd in range(1,25):
+        i = (PartInd - 1) // 6
+        j = (PartInd - 1) % 6
+        x, y = np.where(IUV[:, :, 0] == PartInd)
+        if len(x) == 0:
+            continue
+        IUV[x, y, ...] = Tex_Atlas[(200 * j):(200 * j + 200), (200 * i):(200 * i + 200), :][((255-IUV[:,:,2][x,y])*199./255.).astype(int),(IUV[:,:,1][x,y]*199./255.).astype(int),...]
+    return IUV
 
-mask[forground > 0] = 1
-mask[prob_forground > 0] = 3
-rect = (142,10,804,1060)
+def refresh(lis,data):
+    for i in range(len(lis)-1):
+        lis[len(lis)-i-1] = lis[len(lis)-i-2]
+    lis[0] = data
+    return lis
 
-# 建立背景模型和前景模型，大小为1*65
-bgdModel = np.zeros((1, 65), np.float64)
+_,name_all = Get_List('./video/tmp')
+texture_all = []
+for name in name_all:
+    texture_all.append(cv2.imread(os.path.join('./video/tmp/',name)))
+texture_length = len(texture_all)
 
-fgdModel = np.zeros((1, 65), np.float64)
+root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06/DensePoseProcess'
+pose_path = os.path.join(root,'org')
+uv_map_path = os.path.join(root,'uv_unwrap')
+_,name_all = Get_List(pose_path)
+_,uv_name_all = Get_List(uv_map_path)
 
 
-# 把蒙版中白色地方置为1，作为确定前景。黑色地方置为0，作为确定背景
+for name1,name2 in zip(name_all,uv_name_all):
+    time_old = time.time()
+    pose = cv2.imread(os.path.join(pose_path,name1))
+    pose = cv2.resize(pose, (pose.shape[1] // 4, pose.shape[0] // 4))
+    uv = cv2.imread(os.path.join(uv_map_path, name2))
 
-cv2.grabCut(img, mask, None, bgdModel, fgdModel, 8, cv2.GC_INIT_WITH_MASK)
+    texture_all = refresh(texture_all,uv)
+    all_point = Get_all_IUV_point(pose)
 
-# 把2变为0，把3变为1
+    x_all,y_all = np.where(all_point > 0)
+    # 确定一次需要更新多少个点
+    point_replace = len(x_all) // texture_length
+    texture_choise = np.random.choice(texture_length, size=texture_length, replace=False)
+    all_point = np.zeros((1200, 800,3)).astype(np.uint8)
 
-mask = np.where((mask == 2) | (mask == 0), 0, 1).astype('uint8')
+    for index in texture_choise[:-1]:
+        index_exist = np.arange(x_all.shape[0])
+        inxex_choise = np.random.choice(x_all.shape[0], point_replace, replace=False)
+        all_point[x_all[inxex_choise], y_all[inxex_choise], ...] = \
+            texture_all[index][x_all[inxex_choise], y_all[inxex_choise], ...]
 
-# 将蒙版与原图做点对点乘积
+        index_exist = np.delete(index_exist, inxex_choise)
+        x_all = x_all[index_exist]
+        y_all = y_all[index_exist]
+    all_point[x_all, y_all, ...] = texture_all[-1][x_all, y_all, ...]
 
-img = img * mask[:, :, np.newaxis]
-
-img2 = cv2.resize(img, (int(img.shape[1]*2/3),int(img.shape[0]*2/3)), interpolation=cv2.INTER_CUBIC)
-cv2.imshow('a',img2)
-cv2.waitKey(0)
-
-cv2.destroyAllWindows()
+    pose = IUVToImage(all_point,pose)
+    print(time.time() - time_old)
+    cv2.imshow('a', pose)
+    cv2.waitKey(1)

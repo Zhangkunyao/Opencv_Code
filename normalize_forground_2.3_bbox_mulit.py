@@ -53,34 +53,6 @@ def img_process(img, org_size,pose):
     tmp[x,y,1] = 255
     return tmp
 
-def get_kmeans(data,n_clusters=3):
-    # 返回x轴和y轴的聚类坐标
-    x = [i[0] for i in data]
-    y = [i[1] for i in data]
-    # x 部分
-    consit = np.array([10 for i in range(len(x))])
-    x = np.array(x)
-    point_loc = np.array([consit, x])
-    point_loc = np.transpose(point_loc)
-    kmeans_cell = KMeans(n_clusters=n_clusters, random_state=9)
-    y_pred = kmeans_cell.fit_predict(point_loc)
-    plt.scatter(x, y, c=y_pred)
-    plt.show()
-    print(kmeans_cell.cluster_centers_)
-    x_result = kmeans_cell.cluster_centers_
-    # y 部分
-    consit = np.array([10 for i in range(len(y))])
-    y = np.array(y)
-    point_loc = np.array([consit, y])
-    point_loc = np.transpose(point_loc)
-    kmeans_cell = KMeans(n_clusters=n_clusters, random_state=9)
-    y_pred = kmeans_cell.fit_predict(point_loc)
-    plt.scatter(x, y, c=y_pred)
-    plt.show()
-    print(kmeans_cell.cluster_centers_)
-    y_result = kmeans_cell.cluster_centers_
-    return [x_result,y_result]
-
 def get_scale(source,source_h,source_w,target,target_h,target_w):
     # source = source[0:len(source)-100]
     source_all = []
@@ -108,25 +80,24 @@ def get_scale(source,source_h,source_w,target,target_h,target_w):
                    source_all[:, 2].mean(), source_all[:, 2].var(ddof=1),]
     return target_data,source_data
 
-source_root = '/media/kun/Dataset/Pose/test_data/tmp/'
+source_root = '/media/kun/Dataset/Pose/test_data/'
 target_root = '/media/kun/Dataset/Pose/DataSet/new_data/video_06'
 print(source_root)
-
-source_tmp_path = os.path.join(source_root,'back_ground.png')
-target_tmp_path = os.path.join(target_root,'back_ground.png')
+_,image_all = Get_List(os.path.join(source_root,'img'))
+image_all.sort()
 
 source_data_root = os.path.join(source_root,'DensePoseProcess')
 source_org_path = os.path.join(source_data_root,'org')
 save_path = os.path.join(source_data_root,'normal_loc.txt')
-
 loc_all_source = get_all_loc(os.path.join(source_root,'DensePoseProcess','loc.txt'))
 loc_all_target = get_all_loc(os.path.join(target_root,'DensePoseProcess','loc.txt'))
 
-source_pose_img = cv2.imread(source_tmp_path)
+target_tmp_path = os.path.join(target_root,'back_ground.png')
 target_pose_img = cv2.imread(target_tmp_path)
 target_shape = target_pose_img.shape
-source_shape = source_pose_img.shape
 
+img_name_now = 'a'
+source_shape = cv2.imread(os.path.join(source_root,'img',image_all[0])).shape
 
 target_scale,source_scale = get_scale(loc_all_source,source_shape[0]*1.0,source_shape[1]*1.0,
                                       loc_all_target,target_shape[0]*1.0,target_shape[1]*1.0)
@@ -144,8 +115,13 @@ target_y_mean = target_scale[2]
 target_y_var = target_scale[3]
 target_x_mean = target_scale[4]
 target_x_var = target_scale[5]
+
 # 主程序
 for index in range(len(loc_all_source)):
+    img_name = image_all[index]
+    if img_name[0]!=img_name_now:
+        source_shape = cv2.imread(os.path.join(source_root, 'img', img_name)).shape
+        img_name_now = img_name[0]
 
     tmp = loc_all_source[index]
     point = {'xmin': tmp[0], 'xmax': tmp[1], 'ymin': tmp[2], 'ymax': tmp[3]}
@@ -157,9 +133,7 @@ for index in range(len(loc_all_source)):
     if w < 10 or h < 10:
         result = [0,0,0,0]
     else:
-
-
-        scale = target_h_mean/source_h_mean*(target_shape[0]/source_shape[0])
+        scale = target_shape[0]/source_shape[0]
         # 得出放大后的尺寸
         scale_w = int(w * scale)
         scale_h = int(h * scale)

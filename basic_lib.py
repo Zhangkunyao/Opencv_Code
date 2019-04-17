@@ -1,10 +1,11 @@
 import os
 import numpy as np
 import cv2
-def Get_List(path):
+def Get_List(path,flag = False):
     files = os.listdir(path);
     dirList = []
     fileList = []
+    index = 0
     for f in files:
         if (os.path.isdir(path + '/' + f)):
             if (f[0] == '.'):
@@ -13,6 +14,10 @@ def Get_List(path):
                 dirList.append(f)
         if (os.path.isfile(path + '/' + f)):
             fileList.append(f)
+        if flag and index>100:
+            break
+        index+=1
+    dirList.sort(), fileList.sort()
     return [dirList, fileList]
 
 def mkdir(path):
@@ -99,6 +104,20 @@ def get_muliti_bbox(img):
                     data_map[ymin - 1:ymax + 1, xmin - 1:xmax + 1] = 0;
     return {'xmin':glob_bbox[0],'ymin':glob_bbox[1],'xmax':glob_bbox[2],'ymax':glob_bbox[3]}
 
+def get_bbox1(img):
+    tmp = img[...,0] + img[...,1] + img[...,2]
+    x, y = np.where(tmp > 0)
+    width = tmp.shape[1]
+    hight = tmp.shape[0]
+    left = min(y)
+    right = max(y)
+    top = min(x)
+    down = max(x)
+    index = 0
+    final_result = [0,0,0,0]
+
+    return {"min":(left,top),"max":(right,down),"xmax":right,"xmin":left,"ymin":top,"ymax":down}
+
 def get_bbox(img):
     tmp = img[...,0] + img[...,1] + img[...,2]
     tmp = 1*(tmp>5)
@@ -166,22 +185,18 @@ def get_bbox(img):
     return {"min":(left,top),"max":(right,down),"xmax":right,"xmin":left,"ymin":top,"ymax":down}
 
 def ImageToIUV(im,IUV):
-    U = IUV[:,:,1]
-    V = IUV[:,:,2]
-    I = IUV[:,:,0]
-    TextureIm = np.zeros([24, 200, 200, 3]).astype(np.uint8)
+    generated_image = np.zeros((1200, 800, 3)).astype(np.uint8)
     ###
-    for PartInd in range(1,25):    ## Set to xrange(1,23) to ignore the face part.
-        x,y = np.where(I==PartInd)
-        u_current_points = U[x,y]   #  Pixels that belong to this specific part.
-        v_current_points = V[x,y]
+    for PartInd in range(1, 25):  ## Set to xrange(1,23) to ignore the face part.
+        x, y = np.where(IUV[:, :, 0] == PartInd)
+        u_current_points = IUV[:, :, 1][x, y]  # Pixels that belong to this specific part.
+        v_current_points = IUV[:, :, 2][x, y]
         v_tmp = ((255 - v_current_points) * 199. / 255.).astype(int)
         u_tmp = (u_current_points * 199. / 255.).astype(int)
-        TextureIm[PartInd - 1,v_tmp,u_tmp,...] = im[x, y,...]
-    generated_image = np.zeros((1200, 800, 3)).astype(np.uint8)
-    for i in range(4):
-        for j in range(6):
-            generated_image[(200 * j):(200 * j + 200), (200 * i):(200 * i + 200),...] = TextureIm[(6 * i + j),...]
+
+        i = (PartInd - 1) // 6
+        j = (PartInd - 1) % 6
+        generated_image[(200 * j) + v_tmp, (200 * i) + u_tmp, ...] = im[x, y, ...]
     return generated_image
 
 def IUVToImage(Tex_Atlas,IUV):

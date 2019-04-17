@@ -219,12 +219,12 @@ _, target_org_name_list = Get_List(target_org_path)
 target_org_name_list.sort()
 target_body_json_name_list.sort()
 # video
-fps = 30
-img_size = (1152, 1152)
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-video_path = 'video_1_train.avi'
-videoWriter = cv2.VideoWriter(video_path, fourcc, fps, img_size)
-kernel = np.ones((5, 5), np.uint8)
+# fps = 30
+# img_size = (1152, 1152)
+# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+# video_path = 'video_1_train.avi'
+# videoWriter = cv2.VideoWriter(video_path, fourcc, fps, img_size)
+# kernel = np.ones((5, 5), np.uint8)
 redio = 0.1
 delt = 30
 for index, org_name in enumerate(target_org_name_list):

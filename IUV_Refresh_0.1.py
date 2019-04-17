@@ -116,11 +116,11 @@ name_all_target_img.sort()
 # 刷新比例，有redio的新信息被刷新
 redio = 0.1
 #
-fps = 30
-img_size = (1152, 1152)
-fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-video_path = 'video_iuv_refresh_face_keep.avi'
-videoWriter = cv2.VideoWriter(video_path, fourcc, fps, img_size)
+# fps = 30
+# img_size = (1152, 1152)
+# fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+# video_path = 'video_iuv_refresh_face_keep.avi'
+# videoWriter = cv2.VideoWriter(video_path, fourcc, fps, img_size)
 
 for index,name in enumerate(name_all_source):
     source_pose = cv2.imread(os.path.join(source_pose_path,name))
@@ -154,9 +154,9 @@ for index,name in enumerate(name_all_source):
         IUV_map[x+200*4,y+200*3] = head_part[x,y]
 
         source_img = IUVToImage(IUV_map, source_pose)
-    source_img = img_process(source_img, 1152)
-    videoWriter.write(source_img)
+    # source_img = img_process(source_img, 1152)
+    # videoWriter.write(source_img)
     print(index*1.0/len(name_all_source))
-videoWriter.release()
+# videoWriter.release()
     # cv2.imshow('img',source_img)
     # cv2.waitKey(1)

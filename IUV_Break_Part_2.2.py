@@ -329,12 +329,9 @@ for part in sub_part:
     bigger_mask[x,y] = 255
 
     bigger_mask = cv2.copyMakeBorder(bigger_mask, cut_boundry_y//2, cut_boundry_y//2, cut_boundry_x//2, cut_boundry_x//2, cv2.BORDER_CONSTANT,0)
-    # sub_out = cv2.add(sub_out, np.zeros(np.shape(sub_out), dtype=np.uint8), mask=bigger_mask)
     x, y = np.where(bigger_mask >0)
     final_out[x+xmin - cut_boundry_x//2,y + ymin - cut_boundry_y//2] = sub_out[x, y]
 
-# cv2.imshow('a', tmp)
-# cv2.waitKey(0)
 
 cv2.imshow('final_out',cv2.resize(final_out,(final_out.shape[1]//2,final_out.shape[0]//2)))
 cv2.waitKey(0)
